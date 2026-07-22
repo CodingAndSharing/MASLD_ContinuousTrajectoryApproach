@@ -9,7 +9,7 @@ library(readxl)
 
 
 #merged Ucam/Sanyal
-merged_counts <- read.csv("data/merged_counts.csv", check.names = F)
+merged_counts <- read.csv("data/mergedcounts.csv", check.names = F)
 rownames(merged_counts) = merged_counts[,1]
 merged_counts = merged_counts[,-1]
 
