@@ -55,6 +55,7 @@ Usage
 """
 
 import io
+import os
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -62,7 +63,10 @@ from pathlib import Path
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = REPO_ROOT / "data"
+# Override with the MASLD_DATA_DIR env var to validate a different copy of
+# metadata.csv (e.g. sandbox/data_dev) instead of the real data/ one -- see
+# sandbox/notebooks/00_download_and_create_data.ipynb for a worked example.
+DATA_DIR = Path(os.environ.get("MASLD_DATA_DIR", REPO_ROOT / "data"))
 METADATA_PATH = DATA_DIR / "metadata.csv"
 
 GEO_ACCESSION = "GSE130970"  # VCU/Sanyal cohort
