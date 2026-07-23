@@ -19,6 +19,7 @@ sandbox/publication/MASDL_framework.pdf):
     -> HISAT2 v2.1.0    alignment to GRCh38
     -> HTSeq v0.11.1    gene-level (Ensembl ID) counts, per sample, per cohort
     -> the two cohorts' count matrices concatenated into one 136-sample matrix
+    -> low-count genes removed (mean count >= 1 across samples)  [recovered -- see below]
     -> data/mergedcounts.csv
 
 The paper never names this file and never narrates the concatenation step
@@ -26,6 +27,26 @@ explicitly -- it sits implicitly between "gene-level counts were obtained
 with HTSeq" (stated per dataset) and "Quantile normalization was applied
 across datasets" (which presupposes one combined matrix). This script makes
 that merge step explicit.
+
+Low-count expression filter (recovered from the committed data)
+---------------------------------------------------------------
+The committed data/mergedcounts.csv is NOT raw HTSeq output: every one of its
+17,090 genes has a mean count >= 1 across the 136 samples (minimum observed =
+137/136 = 1.0074; zero all-zero rows; zero genes detected in <=1 sample). That
+hard floor at mean = 1 is the fingerprint of a low-count filter -- keep a gene
+iff rowMeans(counts) >= 1 (equivalently rowSums >= n_samples) -- applied during
+the original, unstored HTSeq->merge step. No committed script implemented it,
+even though Normalization_and_PCA.R's comment ("exclude low expressed counts")
+refers to exactly this step. filter_low_expressed_genes() below makes it
+explicit and reproducible: applied to the committed matrix it is a no-op (drops
+0 of 17,090 genes), which both validates the recovered threshold and keeps the
+output byte-identical; applied to a freshly merged raw matrix it does the real
+filtering ahead of the rank-based quantile normalization that follows.
+
+NOTE: this faithfully reproduces the ORIGINAL absolute-count threshold. Given
+the 62-fold library-size range here (0.62M .. 38.5M reads), a depth-aware
+filter (edgeR::filterByExpr / CPM) is preferable and would drop ~554 more
+genes -- that upgrade belongs in the src_dev rewrite, not in this script.
 
 What this script can and cannot reproduce from scratch
 --------------------------------------------------------
@@ -110,6 +131,13 @@ VCU_RAW_COUNTS = DATA_DIR / "raw" / "vcu_htseq_counts.tsv"  # GSE130970, 78 samp
 EXPECTED_DATASET_COUNTS = {"UCAM": 58, "SANYAL": 78}  # Methods, p.11
 OUTLIER_SAMPLE_NAME = "Sample 5"  # excluded downstream as an outlier (Supp. Fig. 1a,b)
 
+# Low-count expression filter recovered from the committed matrix (see docstring):
+# keep only genes whose MEAN count across all samples is >= this value. The
+# committed mergedcounts.csv already satisfies this exactly (min mean = 137/136
+# = 1.0074), so re-applying it is a no-op; on a freshly merged raw matrix it
+# performs the real filtering.
+MIN_MEAN_COUNT = 1.0
+
 # ---------------------------------------------------------------------------
 # Re-download sources
 # ---------------------------------------------------------------------------
@@ -161,6 +189,35 @@ def merge_from_raw_htseq_counts(ucam_path: Path, vcu_path: Path) -> pd.DataFrame
     # matrix would be built ahead of cross-dataset quantile normalization and
     # ComBat batch correction.
     return ucam.join(vcu, how="inner")
+
+
+def filter_low_expressed_genes(counts: pd.DataFrame, min_mean: float = MIN_MEAN_COUNT) -> pd.DataFrame:
+    """Remove low-expressed genes: keep a gene iff its mean count across all
+    samples is >= `min_mean` (default 1.0), i.e. rowSums >= min_mean * n_samples.
+
+    This reproduces the low-count filter baked into the committed
+    data/mergedcounts.csv (see module docstring). The "exclude low expressed
+    counts" comment in Normalization_and_PCA.R refers to this step, but no
+    committed script performed it until now.
+
+    Rationale: the next step (quantile normalization, in Normalization_and_PCA.R)
+    is rank-based and therefore sensitive to a large mass of tied near-zero
+    counts, which distort the mean-of-order-statistics reference distribution
+    every sample is mapped onto. Dropping never-/barely-expressed genes first is
+    what makes that normalization well-behaved.
+
+    Boundary note: no gene in the committed matrix sits exactly at mean == 1
+    (the minimum is 137/136), so `>=` vs `>` is indistinguishable from the data;
+    the conventional `>=` form is used here.
+    """
+    means = counts.mean(axis=1)
+    keep = means >= min_mean
+    n_dropped = int((~keep).sum())
+    print(
+        f"[filter] Low-count filter (mean count >= {min_mean}): "
+        f"kept {int(keep.sum())} / {len(keep)} genes (dropped {n_dropped})."
+    )
+    return counts.loc[keep]
 
 
 def validate_against_metadata(counts: pd.DataFrame, metadata: pd.DataFrame) -> None:
@@ -344,6 +401,10 @@ def main(write: bool = False, redownload: bool = False, assume_yes: bool = False
             "real UCAM + VCU/Sanyal concatenation described in Methods p.11."
         )
         counts = merge_from_raw_htseq_counts(UCAM_RAW_COUNTS, VCU_RAW_COUNTS)
+        # Real regeneration path: apply the low-count filter that the committed
+        # matrix already reflects (see filter_low_expressed_genes / docstring),
+        # so a freshly merged matrix matches the published one's gene set.
+        counts = filter_low_expressed_genes(counts, MIN_MEAN_COUNT)
     else:
         print(
             "[fallback] Per-cohort raw HTSeq matrices are not present in "
@@ -354,6 +415,19 @@ def main(write: bool = False, redownload: bool = False, assume_yes: bool = False
             "scratch."
         )
         counts = pd.read_csv(MERGED_COUNTS_PATH, index_col=0)
+
+        # The committed matrix is already filtered; re-applying the recovered
+        # threshold must therefore be a no-op. Assert it, so this script also
+        # serves as a check that MIN_MEAN_COUNT still matches the shipped data.
+        refiltered = filter_low_expressed_genes(counts, MIN_MEAN_COUNT)
+        if refiltered.shape[0] != counts.shape[0]:
+            raise ValueError(
+                f"Low-count filter (mean >= {MIN_MEAN_COUNT}) dropped "
+                f"{counts.shape[0] - refiltered.shape[0]} genes from the committed "
+                f"{MERGED_COUNTS_PATH.name}, which should already be filtered. "
+                "The recovered threshold no longer matches the shipped data."
+            )
+        print(f"[OK] Committed matrix already satisfies mean count >= {MIN_MEAN_COUNT} (filter is a no-op).")
 
         if DUPLICATE_COPY_PATH.exists():
             duplicate = pd.read_csv(DUPLICATE_COPY_PATH, index_col=0)
