@@ -139,6 +139,9 @@ ui-tests/playwright-report
 # VSCode
 .vscode
 
+# Claude Code worktrees/session bookkeeping
+.claude/
+
 # RTC
 .jupyter_ystore.db
 
