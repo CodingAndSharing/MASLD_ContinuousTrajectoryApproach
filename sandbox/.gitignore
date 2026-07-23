@@ -1,0 +1,13 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# not publishable yet
+# src_dev
+publication
+omnipathr-log
+notebooks
+CLAUDE_NOTES.md
+CLAUDE_SCIENCE_MATHS_EXPLANATIONS.md
+README_dev.md
+TODOs.md
