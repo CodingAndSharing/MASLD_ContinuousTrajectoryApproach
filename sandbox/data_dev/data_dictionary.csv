@@ -1,0 +1,49 @@
+file,variable,type_units,description
+01_participants_baseline.csv,participant_id,string,Unique synthetic participant ID
+01_participants_baseline.csv,trajectory_class_truth,categorical,GROUND-TRUTH latent trajectory (stable_steatosis/slow_progressor/fast_progressor/regressor) — for method validation only; would NOT exist in real data
+01_participants_baseline.csv,sex,categorical,Male/Female
+01_participants_baseline.csv,age_baseline,int (years),Age at recruitment
+01_participants_baseline.csv,ethnicity,categorical,Self-reported ethnicity
+01_participants_baseline.csv,bmi_baseline,float (kg/m^2),Body mass index
+01_participants_baseline.csv,waist_cm,int (cm),Waist circumference
+01_participants_baseline.csv,type2_diabetes,0/1,Prevalent type 2 diabetes
+01_participants_baseline.csv,hypertension,0/1,Prevalent hypertension
+01_participants_baseline.csv,dyslipidaemia,0/1,Prevalent dyslipidaemia
+01_participants_baseline.csv,alcohol_units_week,float,Self-reported alcohol (kept < threshold for MASLD definition)
+01_participants_baseline.csv,recruitment_centre,string,Fixed: NIHR BioResource - Cambridge
+01_participants_baseline.csv,consent_recall_by_genotype,0/1,Consented to recall-by-genotype/phenotype
+02_longitudinal_labs_visits.csv,visit_month,int,Months from baseline (0/12/24/36/48)
+02_longitudinal_labs_visits.csv,latent_severity_truth,float 0-1,GROUND-TRUTH latent disease severity at visit — validation only
+02_longitudinal_labs_visits.csv,ALT_U_L / AST_U_L / GGT_U_L / ALP_U_L,int (U/L),Liver enzymes
+02_longitudinal_labs_visits.csv,platelets_10e9_L,int,Platelet count
+02_longitudinal_labs_visits.csv,albumin_g_L,float,Serum albumin (g/L)
+02_longitudinal_labs_visits.csv,bilirubin_umol_L,int,Total bilirubin
+02_longitudinal_labs_visits.csv,hba1c_mmol_mol,int,HbA1c (IFCC units)
+02_longitudinal_labs_visits.csv,triglycerides_mmol_L / HDL_mmol_L,float,Lipids
+02_longitudinal_labs_visits.csv,HOMA_IR,float,Insulin resistance index
+02_longitudinal_labs_visits.csv,liver_stiffness_kPa,float,Vibration-controlled transient elastography (FibroScan)
+02_longitudinal_labs_visits.csv,CAP_dB_m,int,Controlled attenuation parameter (steatosis)
+02_longitudinal_labs_visits.csv,FIB4,float,Fibrosis-4 index = age*AST/(platelets*sqrt(ALT))
+02_longitudinal_labs_visits.csv,APRI,float,AST-to-platelet ratio index
+02_longitudinal_labs_visits.csv,NFS,float,NAFLD Fibrosis Score
+03_proteomics_biomarkers_baseline.csv,PRO_C3_ng_ml,float,Type III collagen formation (fibrogenesis)
+03_proteomics_biomarkers_baseline.csv,CK18_M30_U_L / CK18_M65_U_L,float,Cytokeratin-18 fragments (apoptosis/MASH)
+03_proteomics_biomarkers_baseline.csv,FGF21_pg_ml,float,Fibroblast growth factor 21
+03_proteomics_biomarkers_baseline.csv,adiponectin_ug_ml,float,Adiponectin (protective; falls with severity)
+03_proteomics_biomarkers_baseline.csv,leptin_ng_ml,float,Leptin
+03_proteomics_biomarkers_baseline.csv,TIMP1_ng_ml,float,Tissue inhibitor of metalloproteinase-1
+03_proteomics_biomarkers_baseline.csv,hyaluronic_acid_ng_ml,float,Hyaluronic acid (fibrosis)
+03_proteomics_biomarkers_baseline.csv,IL6_pg_ml / hsCRP_mg_L,float,Inflammatory markers
+04_genetics_risk_variants.csv,PNPLA3_rs738409_G,0/1/2,Risk allele dosage (strongest MASLD variant)
+04_genetics_risk_variants.csv,TM6SF2_rs58542926_T,0/1/2,Risk allele dosage
+04_genetics_risk_variants.csv,GCKR_rs1260326_T,0/1/2,Risk allele dosage
+04_genetics_risk_variants.csv,MBOAT7_rs641738_T,0/1/2,Risk allele dosage
+04_genetics_risk_variants.csv,HSD17B13_rs72613567_TA,0/1/2,Protective allele dosage
+05_histology_staging.csv,biopsy_available,0/1,Liver biopsy performed (~45%)
+05_histology_staging.csv,fibrosis_stage_F,0-4 (NaN if no biopsy),NASH-CRN fibrosis stage
+05_histology_staging.csv,NAS_steatosis_0_3 / NAS_ballooning_0_2 / NAS_inflammation_0_3,ordinal,NAFLD activity score components
+05_histology_staging.csv,MASH_diagnosis,0/1 (NaN if no biopsy),Definite MASH on histology
+06_outcomes_followup.csv,followup_years,float,Follow-up duration
+06_outcomes_followup.csv,progressed_to_advanced_fibrosis,0/1,Progression to >=F3 during follow-up
+06_outcomes_followup.csv,liver_related_event,0/1,Decompensation/HCC/liver death
+06_outcomes_followup.csv,all_cause_death,0/1,Death from any cause

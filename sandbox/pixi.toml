@@ -1,0 +1,111 @@
+[workspace]
+authors = ["Koryna <onlyfordevelopingandsharing@outlook.com>"]
+channels = ["conda-forge", "bioconda"]
+name = "sandbox"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[tasks]
+# PCSF has no conda-forge/bioconda package; install it from GitHub via remotes.
+install-pcsf = "Rscript -e 'if (!requireNamespace(\"PCSF\", quietly = TRUE)) remotes::install_github(\"IOR-Bioinformatics/PCSF\", dependencies = FALSE, upgrade = \"never\")'"
+install-omnipathr = "Rscript -e 'if (!requireNamespace(\"OmnipathR\", quietly = TRUE)) remotes::install_github(\"saezlab/OmnipathR\", dependencies = FALSE, upgrade = \"never\")'"
+post-install = { depends-on = ["install-pcsf", "install-omnipathr"] }
+# Note: r-irkernel and ipykernel auto-register kernelspecs at install time,
+# scoped to .pixi/envs/default/share/jupyter/kernels/{ir,python3} — no
+# separate registration task needed. The ir/kernel.json was hand-patched to
+# use an absolute R path instead of bare "R" (see NOTES.md).
+
+[dependencies]
+# --- Python ---
+python = "3.12.3.*"
+numpy = "1.26.4.*"
+pandas = "2.1.4.*"
+scipy = "1.11.4.*"
+statsmodels = "0.14.1.*"
+python-igraph = "0.11.4.*"
+chembl_webresource_client = "0.10.9.*"
+
+# --- Notebook support: JupyterLab with a Python kernel (ipykernel), an R
+# kernel (r-irkernel), and rpy2 for %%R cell magic inside Python notebooks ---
+jupyterlab = "*"
+ipykernel = "*"
+r-irkernel = "*"
+rpy2 = "*"
+
+# --- R (versions left to the solver so every package resolves against the
+# same R 4.4 / Bioconductor 3.20-era build set; see NOTES.md for the
+# resulting pinned versions vs. software_requirements.txt) ---
+r-base = "4.4.1.*"
+r-assertr = "*"
+bioconductor-biocparallel = "*"
+bioconductor-biomart = "*"
+r-broom = "*"
+r-caret = "*"
+r-cowplot = "*"
+"r-data.table" = "*"
+bioconductor-decoupler = "*"
+bioconductor-deseq2 = "*"
+r-dplyr = "*"
+r-flashclust = "*"
+r-ggplot2 = "*"
+r-ggpubr = "*"
+"bioconductor-go.db" = "*"
+bioconductor-gosemsim = "*"
+r-gridextra = "*"
+# bioconductor-omnipathr has no R4.4 build on bioconda (only R4.3/R4.5); it's
+# pure R with no compiled code, so it's installed via the install-omnipathr
+# task instead. These are its runtime dependencies.
+r-checkmate = "*"
+r-crayon = "*"
+r-curl = "*"
+r-digest = "*"
+r-fs = "*"
+r-httr2 = "*"
+r-later = "*"
+r-logger = "*"
+r-lubridate = "*"
+r-progress = "*"
+"r-r.utils" = "*"
+r-rappdirs = "*"
+r-rmarkdown = "*"
+r-rsqlite = "*"
+r-rvest = "*"
+r-sessioninfo = "*"
+r-stringi = "*"
+r-tidyselect = "*"
+r-vctrs = "*"
+r-withr = "*"
+r-xml = "*"
+r-yaml = "*"
+r-zip = "*"
+r-igraph = "*"
+r-jsonlite = "*"
+r-modelr = "*"
+r-numbers = "*"
+r-pheatmap = "*"
+r-plotly = "*"
+bioconductor-preprocesscore = "*"
+r-proc = "*"
+r-purrr = "*"
+r-randomforest = "*"
+r-rcpp = "*"
+r-readr = "*"
+r-readxl = "*"
+r-reshape2 = "*"
+r-rlang = "*"
+r-remotes = "*"
+r-seurat = "*"
+bioconductor-singlecellexperiment = "*"
+bioconductor-slingshot = "*"
+bioconductor-sva = "*"
+r-stringr = "*"
+r-tidyr = "*"
+r-tidyverse = "*"
+bioconductor-viper = "*"
+r-wgcna = "*"
+# --- PCSF's dependencies (PCSF itself has no conda package; installed via
+# the install-pcsf task below from GitHub) ---
+r-visnetwork = "*"
+"bioconductor-org.hs.eg.db" = "*"
+bioconductor-topgo = "*"
+pypdf = ">=6.14.2,<7"

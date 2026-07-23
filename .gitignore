@@ -7,7 +7,7 @@ data/sc_liver_cell_atlas/*
 src/07.network_analysis/__pycache__
 src/.Rhistory
 
-sandbox
+
 .vscode
 
 *.bundle.*
