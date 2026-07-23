@@ -45,8 +45,9 @@ filtering ahead of the rank-based quantile normalization that follows.
 
 NOTE: this faithfully reproduces the ORIGINAL absolute-count threshold. Given
 the 62-fold library-size range here (0.62M .. 38.5M reads), a depth-aware
-filter (edgeR::filterByExpr / CPM) is preferable and would drop ~554 more
-genes -- that upgrade belongs in the src_dev rewrite, not in this script.
+filter (edgeR::filterByExpr, group = disease stage) is preferable and drops
+207 more genes (17,090 -> 16,883; verified against edgeR 4.8.2) -- that
+upgrade belongs in the src_dev rewrite, not in this script.
 
 What this script can and cannot reproduce from scratch
 --------------------------------------------------------
