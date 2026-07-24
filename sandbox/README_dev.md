@@ -186,6 +186,16 @@ pixi run jupyter lab notebooks/
 
 In the kernel picker choose the display name matching the notebook (see above). In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers both because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
 
+If VS Code's kernel picker does not show either Pixi-backed kernel at all:
+
+1. Open the folder `sandbox/` in VS Code (not just the notebook file).
+2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and run `Python: Select Interpreter`.
+3. Choose the Pixi interpreter at `.pixi/envs/default/bin/python`.
+4. Open your notebook and click the kernel selector in the top-right corner.
+5. Choose the Pixi-backed kernel matching the notebook (see above).
+
+If it still does not list it, run `pixi run jupyter lab notebooks/` once (as above) and reopen the notebook from that Jupyter session or reload VS Code -- this makes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/` visible to the editor.
+
 If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may also need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
 
 **Diagnosing "wrong kernel" symptoms**: if a Python cell fails with something like
