@@ -15,6 +15,14 @@ install-pcsf = "Rscript -e 'remotes::install_github(\"IOR-Bioinformatics/PCSF\",
 # OmnipathR/Bioconductor APIs -- installs current (4.x) instead.
 install-omnipathr = "Rscript -e 'remotes::install_github(\"saezlab/OmnipathR\", upgrade = \"never\")'"
 
+# Both r-irkernel and ipykernel register a Jupyter kernelspec at install
+# time, but ipykernel's default display name ("Python 3 (ipykernel)") is
+# indistinguishable from any other Python kernel on the machine -- easy to
+# pick the wrong one, or the R kernel by mistake, for a pure-Python notebook
+# (or vice versa). Re-registers both with matching, unambiguous names so the
+# kernel picker makes clear which entries belong to this pixi env.
+setup-jupyter-kernels = "Rscript -e 'IRkernel::installspec(name = \"ir\", displayname = \"R (MASLD sandbox pixi)\", user = FALSE)' && python -m ipykernel install --sys-prefix --name python3 --display-name 'Python 3 (MASLD sandbox pixi)'"
+
 [dependencies]
 # Every entry below is pinned with "==" to the exact version+build already
 # validated in this sandbox (cross-checked against the running env's

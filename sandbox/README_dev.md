@@ -162,24 +162,33 @@ pixi run install-omnipathr    # saezlab/OmnipathR -> current (4.x; requested 3.8
                                # and incompatible with current OmnipathR/Bioconductor APIs)
 ```
 
+Also run this once, so the two Jupyter kernels below show up in the kernel picker with clear, unambiguous names instead of ipykernel's generic default (see below):
+
+```bash
+pixi run setup-jupyter-kernels
+```
+
 `sandbox/.pixi/config.toml` sets `run-post-link-scripts = "insecure"`, scoped to this project only -- required for `GO.db`, `org.Hs.eg.db`, and `bioconductor-genomeinfodbdata`, which ship as stub packages whose post-link script downloads the real annotation database at install time.
 
 ### Using this environment as the Jupyter kernel for `sandbox/notebooks/`
 
-Two ways to get this pixi env into a notebook, both installed by `pixi install` above:
+A single Jupyter kernel is inherently one language -- there is no kernel that natively runs both raw R and raw Python syntax in the same cell. This pixi env registers **two separate kernels** (both installed by `pixi install`, both named clearly by `pixi run setup-jupyter-kernels` above), and which one to pick depends on the notebook:
 
-**1. Dedicated R kernel** -- the notebook's kernel is R itself; every cell runs as R. Best for R-heavy notebooks (Seurat/slingshot/DESeq2 work, e.g. `01_preprocessing_and_trajectory_analysis.ipynb`).
+- **`00_download_and_create_data.ipynb` is pure Python** -- pick **"Python 3 (MASLD sandbox pixi)"**. Picking the R kernel here fails immediately (R can't run `import subprocess` etc.) -- this is the most likely cause if a notebook "doesn't run" right after a kernel switch.
+- **`01_preprocessing_and_trajectory_analysis.ipynb` is R-heavy** (Seurat/slingshot/DESeq2) -- pick **"R (MASLD sandbox pixi)"**.
+
+Before `setup-jupyter-kernels` was added, ipykernel's default display name was the generic **"Python 3 (ipykernel)"** -- indistinguishable from any other Python kernel on the machine, while the R one already showed up as "R (MASLD sandbox pixi)". That asymmetry is exactly what makes it easy to end up on the wrong kernel (or the R one by mistake) when looking for "the pixi environment's kernel" in the picker; re-run the task any time that ambiguity resurfaces (e.g. after wiping `.pixi/envs` and reinstalling).
 
 ```bash
 cd sandbox
 pixi run jupyter lab notebooks/
 ```
 
-In the kernel picker choose **"R (MASLD sandbox pixi)"**. In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers it because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
+In the kernel picker choose the display name matching the notebook (see above). In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers both because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
 
-Kernelspecs (`ir` and `python3`) are auto-registered there by the `r-irkernel` and `ipykernel` packages at install time, scoped to this env -- no global `~/.local/share/jupyter` registration needed. If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
+If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may also need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
 
-**2. `%%R` cell magic (rpy2)** -- keep a Python kernel (e.g. for `00_download_and_create_data.ipynb`, which is Python-only), run individual cells as R, pass data back and forth:
+**Mixing both languages in one notebook**: `%%R` cell magic (rpy2) -- keep the Python kernel, run individual cells as R, pass data back and forth. This is the actual way to get R and Python "in the same kernel session", since a kernel itself can't be bilingual:
 
 ```python
 %load_ext rpy2.ipython
