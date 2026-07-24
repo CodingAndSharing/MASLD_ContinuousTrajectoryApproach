@@ -188,6 +188,15 @@ In the kernel picker choose the display name matching the notebook (see above). 
 
 If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may also need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
 
+**Diagnosing "wrong kernel" symptoms**: if a Python cell fails with something like
+
+```
+Error in parse(text = input): <text>:1:8: unexpected symbol
+1: import importlib
+```
+
+that `Error in parse(text = input)` is R's own parser, not this environment -- the notebook is connected to the R kernel, not the Python one. Switch it via the kernel selector. Each `.ipynb`'s `metadata.kernelspec` records which kernel it should default to; `00_download_and_create_data.ipynb` has `kernelspec.name = "python3"` set explicitly for this reason. A notebook with no `kernelspec` at all (only a bare `language_info` hint) has nothing telling the editor which kernel to default to, and can end up silently reusing whatever was last manually selected -- if a notebook keeps reopening on the wrong kernel, check whether its metadata is missing this block.
+
 **Mixing both languages in one notebook**: `%%R` cell magic (rpy2) -- keep the Python kernel, run individual cells as R, pass data back and forth. This is the actual way to get R and Python "in the same kernel session", since a kernel itself can't be bilingual:
 
 ```python
