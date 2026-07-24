@@ -168,6 +168,24 @@ pixi run install-omnipathr    # saezlab/OmnipathR -> current (4.x; requested 3.8
 
 Two ways to get this pixi env into a notebook, both installed by `pixi install` above:
 
+If you are using VS Code and the notebook kernel picker does not show the Pixi environment automatically, use this workflow:
+
+1. Open the folder `sandbox/` in VS Code (not just the notebook file).
+2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and run `Python: Select Interpreter`.
+3. Choose the Pixi interpreter at `.pixi/envs/default/bin/python`.
+4. Open your notebook and click the kernel selector in the top-right corner.
+5. Choose the Pixi-backed kernel (typically `python3` for Python notebooks, or `ir` for R).
+
+If VS Code still does not list it, start Jupyter from the Pixi environment once:
+
+```bash
+cd sandbox
+pixi run jupyter lab notebooks/
+```
+
+Then reopen the notebook from that Jupyter session or reload VS Code. This makes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/` visible to the editor.
+
+
 **1. Dedicated R kernel** -- the notebook's kernel is R itself; every cell runs as R. Best for R-heavy notebooks (Seurat/slingshot/DESeq2 work, e.g. `01_preprocessing_and_trajectory_analysis.ipynb`).
 
 ```bash
@@ -175,7 +193,9 @@ cd sandbox
 pixi run jupyter lab notebooks/
 ```
 
-In the kernel picker choose **"R (MASLD sandbox pixi)"**. In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers it because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
+In the kernel picker choose **"R (MASLD sandbox pixi)"**. 
+
+In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers it because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
 
 Kernelspecs (`ir` and `python3`) are auto-registered there by the `r-irkernel` and `ipykernel` packages at install time, scoped to this env -- no global `~/.local/share/jupyter` registration needed. If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
 
