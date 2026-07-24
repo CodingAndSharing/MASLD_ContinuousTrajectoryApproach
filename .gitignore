@@ -155,7 +155,10 @@ ui-tests/.pnp.*
 notebook/templates/*.html
 
 # pixi environments
-.pixi
+# (.pixi/* not bare .pixi -- a bare directory match blocks git from ever
+# descending into it, which silently defeats sandbox/.gitignore's own
+# `!.pixi/config.toml` negation for the run-post-link-scripts setting)
+.pixi/*
 *.egg-info
 
 # Temporary files used for testing
