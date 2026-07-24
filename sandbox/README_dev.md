@@ -30,9 +30,11 @@ This corresponds to GitHub release v1.0.
 ## Code structure
 
 - The different **parts of the analysis** have been organised in specific files and/or sub-folders in the main 'src' folder. 
-- The full analysis is organised **into sequential steps, numbered (1-12)** according to the order they should be executed (following the order of the results/figures/tables presented in the manuscript). 
+- The full analysis is organised **into sequential steps, numbered (0-12)** according to the order they should be executed (following the order of the results/figures/tables presented in the manuscript). 
 - Each step corresponds to a specific part of the analysis **pipeline**, and can be run independently of the rest (using data generated in the previous steps).
 
+
+0. **download_and_merge_data**: Documents and (re)generates `data/mergedcounts.csv` and `data/metadata.csv` -- the raw, un-normalised UCAM + VCU/Sanyal gene-count matrix and per-sample clinical/histopathology table every downstream script starts from. `mergedcounts_generation.py` validates the committed matrix against `metadata.csv` (and can re-merge it from separate per-cohort HTSeq matrices, if you have them); `metadata_generation.py` cross-checks the committed metadata against GEO/ArrayExpress' public records, since large parts of it (UCAM's histology component scores, T2DM/SAF-category for both cohorts) are human-curated and not otherwise reproducible from public sources. `regenerate_from_raw_fastq.py` goes further and does a real, from-scratch regeneration -- downloading the actual raw paired-end FASTQ for both cohorts and running FastQC -> HISAT2 -> HTSeq itself -- at the cost of ~338 GB of downloads and, per an unbenchmarked estimate, several days of alignment compute; see its module docstring before running it. `sandbox/notebooks/00_download_and_create_data.ipynb` walks through running all three against a disposable `sandbox/data_dev/` copy, without ever touching `data/` itself.
 
 1. **preprocessing_and_trajectory_analysis**: File organisation, preprocessing (normalisation, PCA, batch correction) and main trajectory inference and analysis.
 **Validation:** The following subfolders include the scripts used for validation of the preprocessing and **trajectory inference** part of the analysis. 
