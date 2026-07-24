@@ -7,8 +7,8 @@ data/sc_liver_cell_atlas/*
 src/07.network_analysis/__pycache__
 src/.Rhistory
 
-
-.vscode
+.claude
+# .vscode
 
 *.bundle.*
 lib/
@@ -158,7 +158,10 @@ ui-tests/.pnp.*
 notebook/templates/*.html
 
 # pixi environments
-.pixi
+# (.pixi/* not bare .pixi -- a bare directory match blocks git from ever
+# descending into it, which silently defeats sandbox/.gitignore's own
+# `!.pixi/config.toml` negation for the run-post-link-scripts setting)
+.pixi/*
 *.egg-info
 
 # Temporary files used for testing
