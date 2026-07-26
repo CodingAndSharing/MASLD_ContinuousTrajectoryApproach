@@ -162,52 +162,26 @@ pixi run install-omnipathr    # saezlab/OmnipathR -> current (4.x; requested 3.8
                                # and incompatible with current OmnipathR/Bioconductor APIs)
 ```
 
-Also run this once, so the two Jupyter kernels below show up in the kernel picker with clear, unambiguous names instead of ipykernel's generic default (see below):
-
-```bash
-pixi run setup-jupyter-kernels
-```
-
 `sandbox/.pixi/config.toml` sets `run-post-link-scripts = "insecure"`, scoped to this project only -- required for `GO.db`, `org.Hs.eg.db`, and `bioconductor-genomeinfodbdata`, which ship as stub packages whose post-link script downloads the real annotation database at install time.
 
 ### Using this environment as the Jupyter kernel for `sandbox/notebooks/`
 
-A single Jupyter kernel is inherently one language -- there is no kernel that natively runs both raw R and raw Python syntax in the same cell. This pixi env registers **two separate kernels** (both installed by `pixi install`, both named clearly by `pixi run setup-jupyter-kernels` above), and which one to pick depends on the notebook:
+Two ways to get this pixi env into a notebook, both installed by `pixi install` above:
 
-- **`00_download_and_create_data.ipynb` is pure Python** -- pick **"Python 3 (MASLD sandbox pixi)"**. Picking the R kernel here fails immediately (R can't run `import subprocess` etc.) -- this is the most likely cause if a notebook "doesn't run" right after a kernel switch.
-- **`01_preprocessing_and_trajectory_analysis.ipynb` is R-heavy** (Seurat/slingshot/DESeq2) -- pick **"R (MASLD sandbox pixi)"**.
-
-Before `setup-jupyter-kernels` was added, ipykernel's default display name was the generic **"Python 3 (ipykernel)"** -- indistinguishable from any other Python kernel on the machine, while the R one already showed up as "R (MASLD sandbox pixi)". That asymmetry is exactly what makes it easy to end up on the wrong kernel (or the R one by mistake) when looking for "the pixi environment's kernel" in the picker; re-run the task any time that ambiguity resurfaces (e.g. after wiping `.pixi/envs` and reinstalling).
+**1. Dedicated R kernel** -- the notebook's kernel is R itself; every cell runs as R. Best for R-heavy notebooks (Seurat/slingshot/DESeq2 work, e.g. `01_preprocessing_and_trajectory_analysis.ipynb`).
 
 ```bash
 cd sandbox
 pixi run jupyter lab notebooks/
 ```
 
-In the kernel picker choose the display name matching the notebook (see above). In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers both because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
+In the kernel picker choose **"R (MASLD sandbox pixi)"**. 
 
-If VS Code's kernel picker does not show either Pixi-backed kernel at all:
+In VS Code: open the notebook, click the kernel selector (top right), choose "Select Another Kernel" -> "Jupyter Kernel..." and pick the same one -- VS Code discovers it because `pixi run jupyter lab` (or any `jupyter`/`python`/`Rscript` command run through `pixi run`/`pixi shell`) exposes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/`.
 
-1. Open the folder `sandbox/` in VS Code (not just the notebook file).
-2. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) and run `Python: Select Interpreter`.
-3. Choose the Pixi interpreter at `.pixi/envs/default/bin/python`.
-4. Open your notebook and click the kernel selector in the top-right corner.
-5. Choose the Pixi-backed kernel matching the notebook (see above).
+Kernelspecs (`ir` and `python3`) are auto-registered there by the `r-irkernel` and `ipykernel` packages at install time, scoped to this env -- no global `~/.local/share/jupyter` registration needed. If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
 
-If it still does not list it, run `pixi run jupyter lab notebooks/` once (as above) and reopen the notebook from that Jupyter session or reload VS Code -- this makes the kernelspecs under `.pixi/envs/default/share/jupyter/kernels/` visible to the editor.
-
-If you ever wipe `.pixi/envs` and reinstall, the `ir` kernelspec may also need its R path hand-patched to the env's absolute `R` binary (`.pixi/envs/default/lib/R/bin/R`) so it still resolves if launched by a process without the pixi env active on `PATH` -- or just always launch Jupyter via `pixi run`, which works with a bare `R` too and is the common case.
-
-**Diagnosing "wrong kernel" symptoms**: if a Python cell fails with something like
-
-```
-Error in parse(text = input): <text>:1:8: unexpected symbol
-1: import importlib
-```
-
-that `Error in parse(text = input)` is R's own parser, not this environment -- the notebook is connected to the R kernel, not the Python one. Switch it via the kernel selector. Each `.ipynb`'s `metadata.kernelspec` records which kernel it should default to; `00_download_and_create_data.ipynb` has `kernelspec.name = "python3"` set explicitly for this reason. A notebook with no `kernelspec` at all (only a bare `language_info` hint) has nothing telling the editor which kernel to default to, and can end up silently reusing whatever was last manually selected -- if a notebook keeps reopening on the wrong kernel, check whether its metadata is missing this block.
-
-**Mixing both languages in one notebook**: `%%R` cell magic (rpy2) -- keep the Python kernel, run individual cells as R, pass data back and forth. This is the actual way to get R and Python "in the same kernel session", since a kernel itself can't be bilingual:
+**2. `%%R` cell magic (rpy2)** -- keep a Python kernel (e.g. for `00_download_and_create_data.ipynb`, which is Python-only), run individual cells as R, pass data back and forth:
 
 ```python
 %load_ext rpy2.ipython
@@ -221,3 +195,28 @@ print(R.version.string)
 Pass Python -> R and back with `%%R -i my_python_df -o result_df`.
 
 Both were tested directly against the Jupyter kernel protocol (not just `Rscript`) and against `rpy2.robjects` -- both execute correctly.
+
+
+### New update for running in Jupyter kernel:
+
+Root cause: two separate issues compounding.
+
+1. The setup-jupyter-kernels task has never been run. The kernel inside the pixi env still has the generic display name "Python 3 (ipykernel)" instead of "Python 3 (MASLD sandbox pixi)", because the re-registration command in pixi.toml was never executed.
+2. The kernels are only installed inside the pixi env's prefix (--sys-prefix), not at the user level. They are only visible to JupyterLab when it is launched from within the pixi environment. If you open the notebook via VS Code, a system JupyterLab, or any other Jupyter not started with pixi run, the kernel simply doesn't appear.
+
+The notebook metadata already expects name: python3 / display "Python 3 (MASLD sandbox pixi)", so the intent is correct — the registration just hasn't happened.
+
+Fix — two steps:
+
+- Step 1: Run setup-jupyter-kernels inside the pixi env to re-register with the correct display name:
+cd sandbox && pixi run setup-jupyter-kernels
+
+- Step 2 (if you need it visible outside pixi): Install the kernel at the user level so any JupyterLab can find it:
+```bash
+cd sandbox && pixi run python -m ipykernel install --user --name python3-masld-sandbox --display-name "Python 3 (MASLD sandbox pixi)
+```
+
+- Step 3: Always launch JupyterLab from inside the pixi env so the correct environment is active:
+cd sandbox && pixi run jupyter lab
+
+If you launch JupyterLab from VS Code or a system terminal without pixi run, the kernel path won't include the pixi env and the kernel won't be offered — even after step 1. Step 2 + Step 3 together ensure it works from anywhere.
